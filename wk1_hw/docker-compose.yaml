@@ -1,0 +1,48 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: pg-database
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - pg-network
+
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin2
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "8097:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin2
+    depends_on:
+      - postgres
+    networks:
+      - pg-network
+
+  ingest:
+    build: .
+    environment:
+      DB_HOST: postgres
+    depends_on:
+      - postgres
+    networks:
+      - pg-network
+
+volumes:
+  pgdata:
+  pgadmin_data:
+
+networks:
+  pg-network:
+    driver: bridge
