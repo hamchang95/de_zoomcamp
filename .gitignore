@@ -210,3 +210,4 @@ __marimo__/
 *.parquet
 
 gcs.json
+*.csv.gz
