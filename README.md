@@ -100,7 +100,3 @@ SELECT
     COUNT(1)
 FROM stg_fhv
 
---Q9. Write a SELECT count(*) query FROM the materialized table you created. How many bytes does it estimate will be read? Why?
-SELECT COUNT(*)
-FROM ny_taxi.yellow_tripdata;
---A9. This query will process 0 B when run as BigQuery stores row counts as table metadata.
