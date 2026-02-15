@@ -5,80 +5,100 @@ This is a repo to review lessons and complete homeworks for DE Zoomcamp 2026.
 Week 1: 
 Week 2: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk2_hw/q1_q6.sql)
 Week 3: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk3_hw/q1_q9.sql)
+Week 4: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk4_hw/q1_q6.md)
 
-# Week 3 HW
---Create an external table using the Yellow Taxi Trip Records.
-CREATE OR REPLACE EXTERNAL TABLE `ny_taxi.external_yellow`
-OPTIONS (
-    format = 'PARQUET',
-    uris = ['gs://{bucket_name}/*.parquet']
-);
+# Week 4 HW
+## Question 1. dbt Lineage and Execution
+Given a dbt project with the following structure:
 
--- Create a non partitioned table from external table
-CREATE OR REPLACE TABLE ny_taxi.yellow_tripdata AS
-SELECT * FROM ny_taxi.external_yellow;
+models/
+├── staging/
+│   ├── stg_green_tripdata.sql
+│   └── stg_yellow_tripdata.sql
+└── intermediate/
+    └── int_trips_unioned.sql (depends on stg_green_tripdata & stg_yellow_tripdata)
+If you run dbt run --select int_trips_unioned, what models will be built?
 
---Q1. What is count of records for the 2024 Yellow Taxi Data?
-SELECT COUNT(1)
-FROM
-ny_taxi.external_yellow;
+*stg_green_tripdata, stg_yellow_tripdata, and int_trips_unioned (upstream dependencies)*
 
---A1. 20332093
+## Question 2. dbt Tests
+You've configured a generic test like this in your schema.yml:
 
---Q2. Write a query to count the distinct number of PULocationIDs for the entire dataset on both the tables.
--- What is the estimated amount of data that will be read when this query is executed on the External Table and the Table?
-SELECT COUNT(DISTINCT(PULocationID))
-FROM ny_taxi.external_yellow;
---This query will process 0 B when run.
+columns:
+  - name: payment_type
+    data_tests:
+      - accepted_values:
+          arguments:
+            values: [1, 2, 3, 4, 5]
+            quote: false
+Your model fct_trips has been running successfully for months. A new value 6 now appears in the source data.
 
-SELECT COUNT(DISTINCT(PULocationID))
-FROM ny_taxi.yellow_tripdata;
---This query will process 155.12 MB when run.
---A2. 0 MB for the External Table and 155.12 MB for the Materialized Table
+What happens when you run dbt test --select fct_trips?
 
---Q3. Write a query to retrieve the PULocationID from the table (not the external table) in BigQuery. Now write a query to retrieve the PULocationID and DOLocationID on the same table. Why are the estimated number of Bytes different?
-SELECT PULocationID
-FROM ny_taxi.yellow_tripdata;
---This query will process 155.12 MB when run.
+*dbt will fail the test, returning a non-zero exit code*
 
-SELECT PULocationID, DOLocationID
-FROM ny_taxi.yellow_tripdata;
---This query will process 310.24 MB when run.
---A3. BigQuery is a columnar database, and it only scans the specific columns requested in the query. Querying two columns (PULocationID, DOLocationID) requires reading more data than querying one column (PULocationID), leading to a higher estimated number of bytes processed.
+Question 3. Counting Records in fct_monthly_zone_revenue
+After running your dbt project, query the fct_monthly_zone_revenue model.
 
---Q4. How many records have a fare_amount of 0?
-SELECT COUNT(1)
-FROM ny_taxi.external_yellow
-WHERE fare_amount = 0;
+What is the count of records in the fct_monthly_zone_revenue model?
 
---A4. 8,333
+*15,421*
 
---Q5. What is the best strategy to make an optimized table in Big Query if your query will always filter based on tpep_dropoff_datetime and order the results by VendorID (Create a new table with this strategy)
-CREATE OR REPLACE TABLE ny_taxi.yellow_tripdata_partitioned_clustered
-PARTITION BY DATE(tpep_dropoff_datetime)
-CLUSTER BY VendorID AS
-SELECT * FROM ny_taxi.external_yellow;
---A5. Partition by tpep_dropoff_datetime and Cluster on VendorID
+## Question 4. Best Performing Zone for Green Taxis (2020)
+Using the fct_monthly_zone_revenue table, find the pickup zone with the highest total revenue (revenue_monthly_total_amount) for Green taxi trips in 2020.
 
---Q6. Write a query to retrieve the distinct VendorIDs between tpep_dropoff_datetime 2024-03-01 and 2024-03-15 (inclusive)
---Use the materialized table you created earlier in your from clause and note the estimated bytes. Now change the table in the from clause to the partitioned table you created for question 5 and note the estimated bytes processed. What are these values?
-SELECT DISTINCT(VendorID)
-FROM ny_taxi.yellow_tripdata_partitioned_clustered
-WHERE tpep_dropoff_datetime >= '2024-03-01' AND tpep_dropoff_datetime <= '2024-03-15';
---This query will process 26.84 MB when run.
+Which zone had the highest revenue?
 
-SELECT DISTINCT(VendorID)
-FROM ny_taxi.yellow_tripdata
-WHERE tpep_dropoff_datetime >= '2024-03-01' AND tpep_dropoff_datetime <= '2024-03-15';
---This query will process 310.24 MB when run.
+*East Harlem North*
 
---A6. 310.24 MB for non-partitioned table and 26.84 MB for the partitioned table
+## Question 5. Green Taxi Trip Counts (October 2019)
+Using the fct_monthly_zone_revenue table, what is the total number of trips (total_monthly_trips) for Green taxis in October 2019?
 
---Q7. Where is the data stored in the External Table you created?
---A7. GCP Bucket
+*384,624*
 
---Q8. It is best practice in Big Query to always cluster your data:
---A8. False
+select pickup_zone, max(revenue_monthly_total_amount) as max_revenue
+from dbt_prod.fct_monthly
+where service_type = 'green' and 
+revenue_month >= '2020-01-01' and
+revenue_month < '2021-01-01'
+group by pickup_zone
+order by max_revenue desc
+limit 1;
+
+select sum(total_monthly_trips)
+from dbt_prod.fct_monthly
+where service_type = 'green' and 
+revenue_month >= '2019-10-01' and
+revenue_month < '2019-11-01';
+
+## Question 6. Build a Staging Model for FHV Data
+Create a staging model for the For-Hire Vehicle (FHV) trip data for 2019.
+
+Load the FHV trip data for 2019 into your data warehouse
+Create a staging model stg_fhv_tripdata with these requirements:
+Filter out records where dispatching_base_num IS NULL
+Rename fields to match your project's naming conventions (e.g., PUlocationID → pickup_location_id)
+What is the count of records in stg_fhv_tripdata?
+
+*43,244,693*
+
+WITH stg_fhv AS(
+    SELECT
+        dispatching_base_num,
+        pickup_datetime,
+        `dropOff_datetime` as dropoff_datetime,
+        `PUlocationID` as pickup_location_id,
+        `DOlocationID` as dropoff_location_id,
+        `SR_Flag` as sr_flag,
+        `Affiliated_base_number` as affiliated_base_number
+    FROM 
+    {{source('raw_data', 'external_fhv')}}
+    WHERE dispatching_base_num IS NOT NULL
+)
+
+SELECT 
+    COUNT(1)
+FROM stg_fhv
 
 --Q9. Write a SELECT count(*) query FROM the materialized table you created. How many bytes does it estimate will be read? Why?
 SELECT COUNT(*)
