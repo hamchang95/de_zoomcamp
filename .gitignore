@@ -211,3 +211,8 @@ __marimo__/
 
 gcs.json
 *.csv.gz
+.bruin.yml
+logs/runs
+logs/*.log
+*.py[cod]
+logs/queries

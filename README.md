@@ -37,7 +37,7 @@ What happens when you run dbt test --select fct_trips?
 
 *dbt will fail the test, returning a non-zero exit code*
 
-Question 3. Counting Records in fct_monthly_zone_revenue
+## Question 3. Counting Records in fct_monthly_zone_revenue
 After running your dbt project, query the fct_monthly_zone_revenue model.
 
 What is the count of records in the fct_monthly_zone_revenue model?
