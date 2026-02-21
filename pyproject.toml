@@ -8,3 +8,8 @@ dependencies = [
     "google-api-core>=2.29.0",
     "google-cloud-storage>=2.16.0",
 ]
+
+[tool.uv.workspace]
+members = [
+    "wk5_lesson_dlt",
+]
