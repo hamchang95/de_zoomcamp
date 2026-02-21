@@ -24,36 +24,26 @@ dataset = pipeline.dataset()
 # Get ibis connection for querying
 ibis_conn = dataset.ibis_connection()
 
-# Also get direct SQL access for queries
-sql_client = dataset.sql_client()
-
 # %% [markdown]
 # ## 1. Bar Chart: Number of Books per Author
 
 # %%
 # Query to count books per author
 # Authors are stored in the books__author_name child table
-try:
-    # Try using ibis table expressions
-    author_table = ibis_conn.table("books__author_name")
-    author_counts = (
-        author_table
-        .group_by("value")
-        .agg(count=author_table.count())
-        .order_by(ibis.desc("count"))
-        .limit(20)
-    )
-    author_counts_df = author_counts.to_pandas()
-    author_counts_df = author_counts_df.rename(columns={"value": "author_name"})
-except Exception as e:
-    # Fallback to SQL query
-    author_counts_df = sql_client.execute_query("""
-        SELECT value as author_name, COUNT(*) as count
-        FROM books__author_name
-        GROUP BY value
-        ORDER BY count DESC
-        LIMIT 20
-    """)
+author_table = ibis_conn.table("books__author_name")
+
+# Group by author name and count
+author_counts = (
+    author_table
+    .group_by("value")
+    .aggregate(count=author_table.count())
+    .order_by(ibis.desc("count"))
+    .limit(20)
+)
+
+# Execute and convert to pandas
+author_counts_df = author_counts.to_pandas()
+author_counts_df = author_counts_df.rename(columns={"value": "author_name"})
 
 mo.md(f"### Top 20 Authors by Book Count\n\nFound {len(author_counts_df)} authors")
 
@@ -85,13 +75,17 @@ mo.output(fig_bar)
 # Query books by publication year
 # Use first_publish_year from the main books table
 books_table = ibis_conn.table("books")
+
+# Filter out null years and group by year
 books_over_time = (
     books_table
     .filter(books_table.first_publish_year.isnull() == False)
     .group_by("first_publish_year")
-    .agg(count=books_table.count())
+    .aggregate(count=books_table.count())
     .order_by("first_publish_year")
 )
+
+# Execute and convert to pandas
 books_over_time_df = books_over_time.to_pandas()
 books_over_time_df = books_over_time_df.rename(columns={"first_publish_year": "year"})
 
