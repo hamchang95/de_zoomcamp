@@ -7,6 +7,31 @@ Week 2: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk2_hw/q1_q6.
 Week 3: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk3_hw/q1_q9.sql)
 Week 4: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk4_hw/q1_q6.md)
 Week 5: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk5_hw/q1_q7.md)
+Week 5 dlt: [🔗](https://github.com/hamchang95/de_zoomcamp/blob/main/wk5_hw_dlt/q1_q3.md)
+
+# Week 5 dlt 
+
+### Question 1: What is the start date and end date of the dataset?
+
+- 2009-01-01 to 2009-01-31
+- **2009-06-01 to 2009-07-01**
+- 2024-01-01 to 2024-02-01
+- 2024-06-01 to 2024-07-01
+
+### Question 2: What proportion of trips are paid with credit card?
+
+- 16.66%
+- **26.66%**
+- 36.66%
+- 46.66%
+
+### Question 3: What is the total amount of money generated in tips?
+
+- $4,063.41
+- **$6,063.41**
+- $8,063.41
+- $10,063.41
+
 # Week 5 HW 
 ### Question 1. Bruin Pipeline Structure
 
