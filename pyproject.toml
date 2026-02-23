@@ -12,4 +12,5 @@ dependencies = [
 [tool.uv.workspace]
 members = [
     "wk5_lesson_dlt",
+    "wk5_hw_dlt",
 ]
