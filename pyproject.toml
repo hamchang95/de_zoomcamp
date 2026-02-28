@@ -13,4 +13,6 @@ dependencies = [
 members = [
     "wk5_lesson_dlt",
     "wk5_hw_dlt",
+    "wk6_lesson",
+    "wk6_hw",
 ]
